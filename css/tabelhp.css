@@ -1,0 +1,98 @@
+@media (max-width: 1200px) {
+
+    .datatable-input {
+        max-width: 100px;
+        max-height: 32px;
+    }
+}
+
+@media (max-width: 500px) {
+
+    .card-body {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
+
+    .container-fluid {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        padding-bottom: 10px !important;
+        padding-top: 10px !important;
+    }
+
+    .datatable-selector {
+        font-size: 10px;
+        padding-right: 28px !important;
+        padding-left: 8px !important;
+
+    }
+
+    .datatable-top {
+        padding-bottom: 8px;
+    }
+
+    .datatable-table {
+        margin-bottom: 10px;
+    }
+
+    .datatable-input {
+        max-width: 100px;
+        max-height: 32px;
+        font-size: 10px !important;
+    }
+
+    .datatable-info {
+        font-size: 10px !important;
+    }
+
+    .datatable-sorter {
+        padding-right: 12px;
+    }
+
+    /* .datatable-sorter::before,.datatable-sorter::after {
+        border-right: 8px
+    }  */
+
+    .datatable-table>thead>tr>th {
+        vertical-align: bottom;
+        text-align: left;
+        border-bottom: none;
+        padding: 3.5px 5px
+    }
+
+    .col-form-label {
+        font-size: 15px;
+    }
+
+    label {
+        font-size: 12px;
+        color: rgb(96, 96, 96);
+    }
+
+    #headtabel {
+        font-size: 12px;
+    }
+
+    /* Atur ukuran font tabel menjadi lebih kecil */
+    .datatabel {
+        font-size: 11px;
+    }
+
+    /* Kurangi padding sel tabel */
+    .datatabel td {
+        padding: 5px;
+    }
+
+    /* Kurangi padding header tabel */
+    .datatabel th {
+        padding: 5px;
+    }
+
+    /* Atur lebar tabel agar dapat di-scroll horizontal */
+    /* .datatabel {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    } */
+
+}

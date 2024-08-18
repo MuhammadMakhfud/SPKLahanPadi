@@ -1,0 +1,113 @@
+@import url('tabelhp.css');
+
+/* bagan atas */
+
+.custom-img {
+    max-width: 100%;
+    /* Agar gambar tidak melebihi lebar kontainer */
+    height: auto;
+    /* Mempertahankan rasio aspek gambar */
+    margin-bottom: 20px;
+    /* Menambahkan spasi di bawah gambar */
+}
+
+.datatable-selector {
+    padding-bottom: 6px;
+    padding-left: 18px;
+    padding-right: 34px;
+    padding-top: 6px;
+}
+
+.datatable-info {
+    font-size: 14px;
+    margin: 0;
+}
+
+/* Menyusun elemen navbar menggunakan Flexbox */
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.btn-link {
+    margin-left: 15px;
+}
+
+/* Mengatur gaya tombol */
+.fa-square-plus {
+    display: inline-flex;
+    /* Menyusun ikon secara inline dan fleksibel */
+    align-items: center;
+    /* Menyelaraskan ikon secara vertikal di tengah */
+    justify-content: center;
+    /* Menyelaraskan ikon secara horizontal di tengah */
+    font-size: 24px;
+    /* Ukuran ikon */
+    color: #000000;
+    /* Warna ikon */
+}
+
+.nav {
+    padding: 20px;
+}
+
+.navbar-container {
+    margin-left: 30px;
+    margin-right: 30px;
+    text-align: left;
+}
+
+/* Sidebar selalu terlihat di desktop */
+@media (min-width: 1200px) {
+    #layoutSidenav_nav {
+        width: 15%;
+        /* Ukuran sidebar untuk desktop */
+        position: fixed;
+        /* height: 100%; */
+        overflow: auto;
+        display: block;
+        /* Pastikan sidebar selalu terlihat */
+    }
+
+    #layoutSidenav_content {
+        margin-left: 1% !important;
+        /* Margin untuk konten saat sidebar aktif */
+        margin-right: 1%;
+    }
+
+    #sidebarToggle {
+        display: none;
+        /* Sembunyikan tombol toggle di desktop */
+    }
+}
+
+/* Sidebar bisa disembunyikan di bawah lebar 1200px */
+@media (max-width: 1199px) {
+    #layoutSidenav_nav {
+        display: block;
+        /* Sidebar tersembunyi di bawah lebar 1200px */
+    }
+
+    #sidebarToggle {
+        display: block;
+        /* Tampilkan tombol toggle di bawah lebar 1200px */
+    }
+
+    #layoutSidenav_content {
+        margin-left: 0;
+        /* Tidak ada margin di bawah lebar 1200px */
+    }
+
+    .sb-sidenav-toggled #layoutSidenav_nav {
+        display: block;
+        /* Tampilkan sidebar saat toggle aktif */
+        width: 15%;
+        /* Ukuran sidebar saat toggle aktif */
+    }
+
+    .sb-sidenav-toggled #layoutSidenav_content {
+        margin-left: 15%;
+        /* Margin untuk konten saat sidebar aktif */
+    }
+}

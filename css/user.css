@@ -1,0 +1,106 @@
+@import url('tabelhp.css');
+
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+
+}
+
+main{
+    flex: 1;
+    margin-left: 10%;
+    margin-right: 10%;
+}
+
+
+@media (max-width: 1200px) {
+    main{
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+}
+
+/* bagan atas */
+.flex-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.flex-column-auto {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    margin-top: auto;
+}
+
+/* inibagian navigasi  */
+
+.navbar-nav {
+    margin-right: 10%;
+}
+
+.navbar-brand.no-hover {
+    margin-left: 10%;
+    /* Warna teks default */
+
+}
+
+@media (max-width: 1200px) {
+    .navbar-nav {
+        margin-right: 1%;
+    }
+
+    .navbar-brand.no-hover {
+        margin-left: 1%;
+    }
+}
+
+@media (max-width: 768px) {
+
+    .navbar-brand {
+        padding-left: 1% !important;
+        padding-right: 1% !important;
+        /* margin-right: 0; */
+    }
+    .navbar-brand.no-hover {
+        margin-left: 2%;
+    }
+
+}
+
+.nav-item {
+    margin-right: 1rem;
+    /* Jarak antar item navigasi */
+}
+
+.navbar-brand {
+    font-size: 1rem;
+    /* Ukuran font yang lebih besar */
+    padding: 0.5rem 1rem;
+    /* Padding */
+    text-decoration: none;
+    /* Menghilangkan garis bawah */
+    color: #bdbdbd;
+    /* Warna teks default */
+}
+
+.navbar-brand:hover:not(.no-hover) {
+    color: #ffffff;
+    /* Warna teks saat hover */
+    border-radius: 0.25rem;
+    /* Sudut melengkung */
+}
+
+.navbar-brand.active {
+    color: #f8f9fa;
+    /* Warna teks saat hover */
+    font-weight: bold;
+    /* Menebalkan teks */
+
+}
+

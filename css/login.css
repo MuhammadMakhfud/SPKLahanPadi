@@ -1,0 +1,39 @@
+body.bg-primary {
+    background-image: url(../assets/img/wp.jpg);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.card {
+    background: rgba(20, 20, 20, 0.7);
+    width: 100%;
+    max-width: 400px;
+    border-radius: 5%;
+}
+
+.card-header,
+.card-footer {
+    background: transparent;
+}
+
+.text-center {
+    color: rgb(255, 255, 255);
+}
+
+.input-group .input-group-text {
+    cursor: pointer;
+}
+
+@media (max-width: 500px) {
+
+    .card {
+        max-width: 300px !important;
+    }
+
+}
