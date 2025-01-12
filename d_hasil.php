@@ -8,7 +8,8 @@ require_once 'layout/head.php';
 require_once 'kendali/koneksi.php';
 require_once 'kendali/fungsi.php';
 
-setActiveNavLink('hasil-link')
+setActiveNavLink('hasil-link');
+hitung($db);
 ?>
 
 <div id="layoutSidenav_content">
@@ -22,7 +23,7 @@ setActiveNavLink('hasil-link')
             <div id="tabel1" class="card mb-4">
                 <div class="card-header">
                     <i class="fas fa-table me-1"></i>
-                    DataTable Example
+                    Hasil Perankingan
                 </div>
                 <div class="card-body">
                     <table class="datatabel">
@@ -30,26 +31,30 @@ setActiveNavLink('hasil-link')
                             <tr>
                                 <th>Kode Alternatif</th>
                                 <th>Nama Alternatif</th>
-                                <th>Rangking</th>
+                                <th>Nilai</th>
+                                <th>Ranking</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php
-                            updateHasilTable($db);
-                            $dataHasil = getTableData($db, 'hasil', 'rangking');
+                            gabungPreferensiSawTopsis($db, 'saw_preferensi', 'topsis_preferensi', 'hasil');
+                            $dataHasil = getTableData($db, 'hasil', 'ranking');
                             while ($row = $dataHasil->fetch_assoc()): ?>
                                 <tr>
-                                    <td><?= $row['kode']; ?></td>
-                                    <td><?= $row['nama']; ?></td>
-                                    <td><?= $row['rangking']; ?></td>
+                                    <td><?= htmlspecialchars($row['kode']); ?></td>
+                                    <td><?= htmlspecialchars($row['nama']); ?></td>
+                                    <td><?= htmlspecialchars(number_format($row['nilai'], 4)); ?></td>
+                                    <td><?= htmlspecialchars($row['ranking']); ?></td>
                                 </tr>
                             <?php endwhile; ?>
+
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </main>
-    <?php include 'layout\footer.php'; ?>
+    <?php include 'layout/footer.php'; ?>
 </div>
+
 </html>

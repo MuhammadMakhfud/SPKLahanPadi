@@ -1,17 +1,22 @@
 <?php
 ob_start();
-include 'kendali/ceklogin1.php';
+session_start();
 
-
+// Cek apakah sesi pengguna ada
+if (!isset($_SESSION['username'])) {
+    // Jika tidak ada sesi pengguna, arahkan ke halaman login
+    header("Location: login.php");
+    exit();
+}
 ?>
 
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <meta name="description" content="" />
-    <meta name="author" content="Syafira" />
-    <link rel="short icon" href="assets/img/logo.png" />
+    <meta name="description" content="Sistem Pendukung Keputusan Lahan Padi dengan kombinasi metode SAW dan TOPSIS" />
+    <meta name="author" content="Syaffira" />
+    <link rel="short icon" href="assets/img/padi.png" />
 
     <!-- Link ke CSS -->
     <base href="http://localhost/spklahanpadi/">
@@ -31,7 +36,7 @@ include 'kendali/ceklogin1.php';
 </head>
 
 <body class="sb-nav-fixed">
-    <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
+    <nav class="sb-topnav navbar navbar-expand navbar-dark" style="background-color: #2E5077 ;">
         <button class="btn btn-link btn-sm" id="sidebarToggle" href="#!">
             <i class="fas fa-bars"></i>
         </button>
@@ -46,11 +51,6 @@ include 'kendali/ceklogin1.php';
                     Admin <i class="fas fa-user fa-fw"></i>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                    <li><a class="dropdown-item" href="#!">Settings</a></li>
-                    <li><a class="dropdown-item" href="#!">Activity Log</a></li>
-                    <li>
-                        <hr class="dropdown-divider" />
-                    </li>
                     <li><a class="dropdown-item" href="kendali/logout.php">Logout</a></li>
                 </ul>
             </li>
@@ -60,7 +60,7 @@ include 'kendali/ceklogin1.php';
     <!-- Awal Bar Samping -->
     <div id="layoutSidenav">
         <div id="layoutSidenav_nav">
-            <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
+            <nav class="sb-sidenav accordion sb-sidenav-dark" style="background-color: #2E5077 ;" id="sidenavAccordion">
                 <div class="sb-sidenav-menu">
                     <div class="nav">
                         <a id="admin-link" class="nav-link " href="admin.php">
@@ -88,11 +88,6 @@ include 'kendali/ceklogin1.php';
                             Data Hasil
                         </a>
                     </div>
-                </div>
-                <div class="sb-sidenav-footer">
-                    <div class="small">Logged in as:</div>
-                    Start Bootstrap
-                </div>
             </nav>
         </div>
         <!-- Akhir Bar Samping -->

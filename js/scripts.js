@@ -56,7 +56,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const alertMessage = document.getElementById('alert-modal');
     if (alertMessage) {
         setTimeout(function () {
-            alertMessage.style.display = 'none';
+            alertMessage.remove(); // Menghapus elemen dari DOM
         }, 5000); // 5000 milidetik = 5 detik
     }
 });
+
+
+
+
+

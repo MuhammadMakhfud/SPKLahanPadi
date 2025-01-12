@@ -16,16 +16,8 @@ if (isset($_POST['login'])) {
         // Simpan informasi pengguna di sesi
         session_start();
         $_SESSION['username'] = $user['username'];
-        $_SESSION['level'] = $user['level'];
 
-        // Cek level pengguna dan arahkan sesuai
-        if ($user['level'] == 1) {
-            // Arahkan ke halaman admin jika level = 1
-            header("Location: admin.php");
-        } elseif ($user['level'] == 2) {
-            // Arahkan ke halaman user biasa jika level = 2
-            header("Location: index.php");
-        }
+        header("Location: admin.php");
         exit(); // Jangan lupa untuk menghentikan eksekusi setelah redirect
     } else {
         header("Location: login.php?status=error");
@@ -42,7 +34,8 @@ if (isset($_POST['login'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <meta name="description" content="" />
     <meta name="author" content="" />
-    <title>Login Akun</title>
+    <title>Admin</title>
+    <link rel="short icon" href="assets/img/padi.png" />
 
     <!-- Link CSS -->
     <link href="css/styles.css" rel="stylesheet" />
@@ -59,7 +52,7 @@ if (isset($_POST['login'])) {
 <body class="bg-primary">
     <div class="card shadow-lg border-0 rounded-lg">
         <div class="card-header">
-            <h3 class="text-center font-weight-light my-4">Login Akun</h3>
+            <h3 class="text-center font-weight-light my-4">Login Admin</h3>
         </div>
         <div class="card-body">
             <?php if (isset($_GET['status']) && $_GET['status'] == 'error'): ?>

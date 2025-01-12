@@ -6,6 +6,7 @@ $alert_modal = '';
 if (isset($_POST['tambah'])) {
     $kode = $_POST['kode'];
     $nama = $_POST['nama'];
+    $tipe = $_POST['tipe'];
     $atribut = $_POST['atribut'];
     $bobot = $_POST['bobot'] / 100;
 
@@ -20,25 +21,63 @@ if (isset($_POST['tambah'])) {
         exit;
     } else {
         // If no errors, insert data
-        $query = "INSERT INTO kriteria (kode, nama, atribut, bobot) VALUES ('$kode', '$nama', '$atribut', $bobot)";
+        $query = "INSERT INTO kriteria (kode, nama, tipe, atribut, bobot) VALUES ('$kode', '$nama', '$tipe', '$atribut', $bobot)";
         $db->query($query);
 
-        // Create table for the new criterion
-        createSubKriteriaTable($db, $kode);
+        // Create table for the new criterion based on tipe
+        $table_name = 'sub_' . strtolower($kode);
 
-        // Add a new column to the alternatif table
-        addColumn($db, $kode);
+        // Check the type and create the corresponding table
+        if ($tipe == 'jenis') {
+            // Create table for 'jenis' type (id, nama, nilai)
+            $query = "CREATE TABLE IF NOT EXISTS `$table_name` (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nama VARCHAR(30) NOT NULL,
+                nilai INT NOT NULL
+            )";
+        } elseif ($tipe == 'nilai_rentang') {
+            // Create table for 'nilai_rentang' type (id, min, max, satuan, nilai)
+            $query = "CREATE TABLE IF NOT EXISTS `$table_name` (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                min DECIMAL(10, 2) NULL,
+                max DECIMAL(10, 2) NULL,
+                satuan VARCHAR(10) NOT NULL,
+                nilai INT NOT NULL
+            )";
+        }
 
+        // Execute the query to create the table
+        $db->query($query);
+
+        // Add a new column to  table
+        $tables = [
+            'alternatif' => 'VARCHAR(30)',
+            'keputusan' => 'INT',
+            'saw_keputusan_r' => 'FLOAT',
+            'topsis_keputusan_r' => 'FLOAT',
+            'topsis_keputusan_y' => 'FLOAT',
+            'topsis_matrikssolusi' => 'FLOAT'
+        ];
+        $column_name = $db->real_escape_string($kode); // Sanitasi nama kolom
+        foreach ($tables as $table => $type) {
+            // Tentukan nilai default berdasarkan tipe data kolom
+            if ($type === 'VARCHAR(30)') {
+                $default_value = "''"; // Default untuk VARCHAR
+            } else {
+                $default_value = '0'; // Default untuk INT dan FLOAT
+            }
+
+            // Bangun query ALTER TABLE
+            $query = "ALTER TABLE `$table` ADD COLUMN `$column_name` $type DEFAULT $default_value";
+
+            // Jalankan query
+            if (!$db->query($query)) {
+                echo "Error adding column to $table: " . $db->error . "<br>";
+            }
+        }
         header("Location: d_kriteria.php?");
         exit;
     }
-}
-
-// Displaying the alert based on the URL parameters
-if (isset($_GET['error']) && $_GET['error'] == 'duplicate') {
-    $alert_modal = '<div class="alert alert-danger" role="alert">Nama kriteria sudah ada.</div>';
-} else {
-    $alert_modal = '';
 }
 
 // Handle editing criteria
@@ -46,6 +85,7 @@ if (isset($_POST['edit'])) {
     $id = $_POST['id'];
     $kode = $_POST['kode'];
     $nama = $_POST['nama'];
+    $tipe = $_POST['tipe'];
     $atribut = $_POST['atribut'];
     $bobot = $_POST['bobot'] / 100;
 
@@ -73,7 +113,7 @@ if (isset($_POST['edit'])) {
     }
 
     // Update kriteria
-    $query = "UPDATE kriteria SET kode = '$kode', nama = '$nama', atribut = '$atribut', bobot = $bobot WHERE id = $id";
+    $query = "UPDATE kriteria SET kode = '$kode', nama = '$nama', tipe = '$tipe',atribut = '$atribut', bobot = $bobot WHERE id = $id";
     $db->query($query);
 
     // Update table name if kode has changed
@@ -89,6 +129,13 @@ if (isset($_POST['edit'])) {
 
     header("Location: d_kriteria.php");
     exit;
+}
+
+// Displaying the alert based on the URL parameters
+if (isset($_GET['error']) && $_GET['error'] == 'duplicate') {
+    $alert_modal = '<div class="alert alert-danger p-1" role="alert">Nama kriteria sudah ada.</div>';
+} else {
+    $alert_modal = '';
 }
 
 // Handle deleting criteria
@@ -114,9 +161,10 @@ if (isset($_POST['hapus'])) {
     $tables = [
         'alternatif',
         'keputusan',
-        'keputusan_r',
-        'keputusan_y',
-        'm_solusi'
+        'saw_keputusan_r',
+        'topsis_keputusan_r',
+        'topsis_keputusan_y',
+        'topsis_matrikssolusi'
     ];
 
     $column_name = $db->real_escape_string($kode); // Sanitasi nama kolom

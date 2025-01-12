@@ -8,13 +8,10 @@ require_once 'kendali/fungsi.php';
 
 setActiveNavLink('kriteria-link');
 
-
-
 require_once 'kendali/proses_kriteria.php';
 ?>
 
 <body>
-
     <div id="layoutSidenav_content">
         <main>
             <div class="container-fluid px-4">
@@ -28,72 +25,25 @@ require_once 'kendali/proses_kriteria.php';
                         <div>
                             <i class="fas fa-table me-1"></i>
                             Kriteria
-
-
                         </div>
-
-                        <a class="fa-solid fa-square-plus" type="button" title="Tambah" data-bs-toggle="modal" data-bs-target="#tambahdata"></a>
-                        <!-- Modal Tambah -->
-                        <div class="modal fade" id="tambahdata" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h1 class="modal-title fs-5" id="exampleModalLabel">Tambah Data Kriteria</h1>
-                                    </div>
-                                    <div class="modal-body">
-                                        <form method="post" action="d_kriteria.php">
-                                            <div class="mb-3">
-                                                <label for="kode" class="col-form-label">Kode:</label>
-                                                <input type="text" class="form-control" id="kode" value="<?= $kodebaru = getNextKode($db, 'kriteria', 'C'); ?>" name="kode" readonly>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label for="nama" class="col-form-label">Nama:</label>
-                                                <input type="text" class="form-control" id="nama" name="nama" required>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label for="atribut" class="col-form-label">Atribut:</label>
-                                                <select class="form-select" id="atribut" name="atribut" required>
-                                                    <option value="" disabled selected>Pilih Atribut</option>
-                                                    <option value="benefit">Benefit</option>
-                                                    <option value="cost">Cost</option>
-                                                </select>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label for="bobot" class="col-form-label">Bobot:</label>
-                                                <div class="input-group">
-                                                    <input type="number" class="form-control" id="bobot" name="bobot" required min="1" max="100">
-                                                    <span class="input-group-text">%</span>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                                                <button type="submit" name="tambah" class="btn btn-primary">Tambah Data</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <a class="fa-solid fa-square-plus" style="color: #2E5077;" type="button" title="Tambah" data-bs-toggle="modal" data-bs-target="#tambahdata"></a>
                     </div>
+                    <!-- Tabel -->
                     <div class="card-body">
                         <!-- Menampilkan alert jika total bobot tidak sama dengan 100 -->
                         <?php
                         $alert_message = generateAlerts($db);
-                        if ($alert_message) { ?>
-                            <div class="alert alert-danger position-fixed top-0 end-0 p-2 custom-alert" style="margin-top: 80px; margin-right: 30px;" role="alert">
-                                <?= $alert_message ?>
+                        if ($alert_message): ?>
+                            <div class="alert alert-danger top-0 end-0 p-2 custom-alert " role="alert">
+                                <?= $alert_message; ?>
                             </div>
-                        <?php } ?>
-
-
-                        <?php
-
+                        <?php endif;
                         if ($alert_modal): ?>
-                            <div id="alert-modal">
+                            <div id="alert-modal" class="alert alert-danger p-0" role="alert">
                                 <?= $alert_modal; ?>
                             </div>
                         <?php endif; ?>
-                        <table class="datatabel table table-striped">
+                        <table class="datatabel ">
                             <thead>
                                 <tr>
                                     <th>Kode Kriteria</th>
@@ -110,7 +60,7 @@ require_once 'kendali/proses_kriteria.php';
                                     <tr>
                                         <td><?= $row['kode']; ?></td>
                                         <td><?= $row['nama']; ?></td>
-                                        <td><?= $row['atribut']; ?></td>
+                                        <td><?= ucfirst($row['atribut']); ?></td>
                                         <td><?= $row['bobot'] * 100; ?>%</td>
                                         <td>
                                             <a class="btn-icon-primary" type="button" title="Edit" data-bs-toggle="modal" data-bs-target="#editdata<?= $row['id']; ?>">
@@ -119,6 +69,7 @@ require_once 'kendali/proses_kriteria.php';
                                             <a class="btn-icon" type="button" title="Delete" data-bs-toggle="modal" data-bs-target="#hapusnotif<?= $row['id']; ?>">
                                                 <i class="fa-solid fa-trash" alt="Delete" style="width: 18px; height: 18px; color: red"></i>
                                             </a>
+
                                             <!-- Modal Edit -->
                                             <div class="modal fade" id="editdata<?= $row['id']; ?>" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
                                                 <div class="modal-dialog">
@@ -136,6 +87,14 @@ require_once 'kendali/proses_kriteria.php';
                                                                 <div class="mb-3">
                                                                     <label for="nama" class="col-form-label">Nama:</label>
                                                                     <input type="text" class="form-control" id="nama" name="nama" value="<?= htmlspecialchars($row['nama']); ?>" required>
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label for="tipe" class="col-form-label">Tipe Data Kategori:</label>
+                                                                    <select class="form-select" id="tipe" name="tipe" required>
+                                                                        <option value="" disabled selected>Pilih Tipe Data</option>
+                                                                        <option value="jenis" <?= $row['tipe'] == 'jenis' ? 'selected' : ''; ?>>Jenis</option>
+                                                                        <option value="nilai_rentang" <?= $row['tipe'] == 'nilai_rentang' ? 'selected' : ''; ?>>Nilai Rentang</option>
+                                                                    </select>
                                                                 </div>
                                                                 <div class="mb-3">
                                                                     <label for="atribut" class="col-form-label">Atribut:</label>
@@ -161,6 +120,7 @@ require_once 'kendali/proses_kriteria.php';
                                                     </div>
                                                 </div>
                                             </div>
+
                                             <!-- Modal Hapus -->
                                             <div class="modal fade" id="hapusnotif<?= $row['id']; ?>" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
                                                 <div class="modal-dialog">
@@ -187,6 +147,58 @@ require_once 'kendali/proses_kriteria.php';
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Modal Tambah -->
+                    <div class="modal fade" id="tambahdata" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h1 class="modal-title fs-5" id="exampleModalLabel">Tambah Data Kriteria</h1>
+                                </div>
+                                <div class="modal-body">
+                                    <form method="post" action="d_kriteria.php">
+                                        <div class="mb-3">
+                                            <label for="kode" class="col-form-label">Kode:</label>
+                                            <input type="text" class="form-control" id="kode" value="<?= $kodebaru = getNextKode($db, 'kriteria', 'C'); ?>" name="kode" readonly>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="nama" class="col-form-label">Nama:</label>
+                                            <input type="text" class="form-control" id="nama" name="nama" required>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="tipe" class="col-form-label">Tipe Data Kategori:</label>
+                                            <select class="form-select" id="tipe" name="tipe" required>
+                                                <option value="" disabled selected>Pilih Tipe Data</option>
+                                                <option value="jenis">Jenis</option>
+                                                <option value="nilai_rentang">Nilai Rentang</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="atribut" class="col-form-label">Atribut:</label>
+                                            <select class="form-select" id="atribut" name="atribut" required>
+                                                <option value="" disabled selected>Pilih Atribut</option>
+                                                <option value="benefit">Benefit</option>
+                                                <option value="cost">Cost</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="bobot" class="col-form-label">Bobot:</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="bobot" name="bobot" required min="1" max="100">
+                                                <span class="input-group-text">%</span>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                            <button type="submit" name="tambah" class="btn btn-primary">Tambah Data</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </main>

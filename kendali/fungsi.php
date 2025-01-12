@@ -32,45 +32,12 @@ function getNextKode($db, $tabel, $huruf)
         }
     }
 }
-function createSubKriteriaTable($db, $kode)
+
+function formatAngka($angka)
 {
-    $table_name = 'sub_' . $kode;
-    $query = "CREATE TABLE IF NOT EXISTS `$table_name` (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        nama VARCHAR(255) NOT NULL,
-        nilai INT NOT NULL
-    )";
-    $db->query($query);
+    return rtrim(rtrim(number_format($angka, 2, '.', ''), '0'), '.'); // Hilangkan .00 atau .0
 }
-function addColumn($db, $kode)
-{
-    $tables = [
-        'alternatif' => 'VARCHAR(50)',
-        'keputusan' => 'INT',
-        'keputusan_r' => 'FLOAT',
-        'keputusan_y' => 'FLOAT',
-        'm_solusi' => 'FLOAT'
-    ];
 
-    $column_name = $db->real_escape_string($kode); // Sanitasi nama kolom
-
-    foreach ($tables as $table => $type) {
-        // Tentukan nilai default berdasarkan tipe data kolom
-        if ($type === 'VARCHAR(50)') {
-            $default_value = "''"; // Default untuk VARCHAR
-        } else {
-            $default_value = '0'; // Default untuk INT dan FLOAT
-        }
-
-        // Bangun query ALTER TABLE
-        $query = "ALTER TABLE `$table` ADD COLUMN `$column_name` $type DEFAULT $default_value";
-
-        // Jalankan query
-        if (!$db->query($query)) {
-            echo "Error adding column to $table: " . $db->error . "<br>";
-        }
-    }
-}
 function generateAlerts($db)
 {
     $alert_messages = '';
@@ -97,25 +64,16 @@ function generateAlerts($db)
     return $alert_messages;
 }
 
-//subkriteria
-function getSubKriteriaTables($db)
+
+function getKriteriaTipe($db, $kode_kriteria)
 {
-    $tables = [];
-    $query = "SHOW TABLES LIKE 'sub_%'";
+    $query = "SELECT tipe FROM kriteria WHERE kode = '$kode_kriteria'";
     $result = $db->query($query);
-    while ($row = $result->fetch_row()) {
-        $tables[] = $row[0];
+
+    if ($result && $row = $result->fetch_assoc()) {
+        return $row['tipe'];
     }
-    return $tables;
-}
-function getKriteriaData($db, $kode)
-{
-    $query = "SELECT kode, nama FROM kriteria WHERE kode = ?";
-    $stmt = mysqli_prepare($db, $query);
-    mysqli_stmt_bind_param($stmt, "s", $kode);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    return mysqli_fetch_assoc($result);
+    return null;
 }
 
 //alternatif
@@ -123,20 +81,27 @@ function getSubKriteriaOptions($db, $kode_alternatif)
 {
     // Function untuk mengambil data sub-kriteria berdasarkan kode alternatif
     $options = [];
+
     // Pastikan kode alternatif disediakan
     if ($kode_alternatif) {
         // Bangun nama tabel berdasarkan kode alternatif
-        $tabel_sub = "sub_" . strtoupper($kode_alternatif);
+        $tabel_sub = "sub_" . strtolower($kode_alternatif);
 
-        // Query untuk mendapatkan data dari tabel sub_x
-        $query = "SELECT nama, nilai FROM $tabel_sub";
-        $result = $db->query($query);
+        // Cek apakah tabel ada
+        $query_check_table = "SHOW TABLES LIKE '$tabel_sub'";
+        $result_check_table = $db->query($query_check_table);
 
-        // Proses hasil query
-        if ($result) {
-            while ($row = $result->fetch_assoc()) {
-                // Simpan nama sebagai opsi dan nilai sebagai value
-                $options[$row['nilai']] = $row['nama'];
+        if ($result_check_table && $result_check_table->num_rows > 0) {
+            // Jika tabel ada, lakukan query untuk mendapatkan data
+            $query = "SELECT nama, nilai FROM $tabel_sub";
+            $result = $db->query($query);
+
+            // Proses hasil query
+            if ($result) {
+                while ($row = $result->fetch_assoc()) {
+                    // Simpan nama sebagai opsi dan nilai sebagai value
+                    $options[$row['nilai']] = $row['nama'];
+                }
             }
         }
     }
@@ -144,15 +109,8 @@ function getSubKriteriaOptions($db, $kode_alternatif)
     return $options;
 }
 
-//perhitungan
-function hitung($db)
-{
-    hitungKeputusanR($db, 'keputusan', 'kriteria', 'keputusan_r');
-    hitungKeputusanY($db, 'keputusan_r', 'kriteria', 'keputusan_y');
-    hitungMatrikSolusi($db, 'keputusan_y', 'kriteria', 'm_solusi');
-    hitungJarakSolusi($db, 'keputusan_y', 'm_solusi', 'j_solusi');
-    hitungPreferensi($db);
-}
+
+
 
 function getTableColumns($db, $tableName, $excludedColumns = ['kode', 'id'])
 {
@@ -174,7 +132,20 @@ function getTableData($db, $tableName, $urut)
     return $db->query($query);
 }
 
-function hitungKeputusanR($db, $tableKeputusan, $tableKriteria, $tableKeputusanR)
+
+//perhitungan
+function hitung($db)
+{
+    hitungSawKeputusanR($db, 'keputusan', 'kriteria', 'saw_keputusan_r');
+    hitungSawPreferensi($db, 'saw_keputusan_r', 'kriteria', 'saw_preferensi');
+    hitungTopsisKeputusanR($db, 'keputusan', 'kriteria', 'topsis_keputusan_r');
+    hitungTopsisKeputusanY($db, 'topsis_keputusan_r', 'kriteria', 'topsis_keputusan_y');
+    hitungTopsisMatrikSolusi($db, 'topsis_keputusan_y', 'kriteria', 'topsis_matrikssolusi');
+    hitungTopsisJarakMatriks($db, 'topsis_keputusan_y', 'topsis_matrikssolusi', 'topsis_jarakmatriks');
+    hitungTopsisPreferensi($db, 'topsis_jarakmatriks', 'topsis_preferensi');
+}
+
+function hitungSawKeputusanR($db, $tableKeputusan, $tableKriteria, $tableKeputusanR)
 {
     // Ambil data kriteria
     $queryKriteria = "SELECT kode, atribut FROM $tableKriteria";
@@ -185,7 +156,6 @@ function hitungKeputusanR($db, $tableKeputusan, $tableKriteria, $tableKeputusanR
         $kriteria[$row['kode']] = $row['atribut'];
     }
 
-    echo "";
     // Loop melalui setiap kriteria untuk menghitung normalisasi
     foreach ($kriteria as $kodeKriteria => $atribut) {
         // Ambil nilai max/min untuk kriteria ini
@@ -209,10 +179,10 @@ function hitungKeputusanR($db, $tableKeputusan, $tableKriteria, $tableKeputusanR
 
             // Perhitungan normalisasi
             if ($atribut == 'benefit' && $maxValue != 0) {
-                $normalizedValue = round($value / $maxValue, 2);
+                $normalizedValue = round($value / $maxValue, 4);
                 // echo "$kodeAlternatif Benefit: $value / $maxValue = $normalizedValue<br>";
             } elseif ($atribut == 'cost' && $value != 0) {
-                $normalizedValue = round($minValue / $value, 2);
+                $normalizedValue = round($minValue / $value, 4);
                 // echo "Cost: $minValue / $value = $normalizedValue<br>";
             }
 
@@ -222,8 +192,93 @@ function hitungKeputusanR($db, $tableKeputusan, $tableKriteria, $tableKeputusanR
         }
     }
 }
+function hitungSawPreferensi($db, $tableKeputusanR, $tableKriteria, $tablePreferensi)
+{
+    // Ambil bobot untuk setiap kriteria
+    $queryKriteria = "SELECT kode, bobot FROM $tableKriteria";
+    $resultKriteria = $db->query($queryKriteria);
 
-function hitungKeputusanY($db, $tableKeputusanR, $tableKriteria, $tableKeputusanY)
+    $bobotKriteria = [];
+    while ($row = $resultKriteria->fetch_assoc()) {
+        $bobotKriteria[$row['kode']] = (float) $row['bobot'];
+    }
+
+    // Ambil data alternatif dari tabel keputusan_r
+    $queryKeputusanR = "SELECT * FROM $tableKeputusanR";
+    $resultKeputusanR = $db->query($queryKeputusanR);
+
+    while ($rowKeputusanR = $resultKeputusanR->fetch_assoc()) {
+        $kodeAlternatif = $rowKeputusanR['kode'];
+        $nilaiPreferensi = 0.0;
+
+        // Hitung nilai preferensi berdasarkan bobot kriteria
+        foreach ($bobotKriteria as $kodeKriteria => $bobot) {
+            $nilaiNormalisasi = (float) $rowKeputusanR[$kodeKriteria];
+            $nilaiPreferensi += $nilaiNormalisasi * $bobot;
+        }
+
+        // Batasi nilai preferensi menjadi 4 desimal
+        $nilaiPreferensi = round($nilaiPreferensi, 4);
+
+        // Simpan nilai preferensi ke tabel preferensi
+        $queryUpdatePreferensi = "UPDATE $tablePreferensi SET nilai = $nilaiPreferensi WHERE kode = '$kodeAlternatif'";
+        $db->query($queryUpdatePreferensi);
+    }
+}
+
+function hitungTopsisKeputusanR($db, $tableKeputusan, $tableKriteria, $tableKeputusanR)
+{
+    // Ambil data kriteria
+    $queryKriteria = "SELECT kode FROM $tableKriteria";
+    $resultKriteria = $db->query($queryKriteria);
+
+    $kriteria = [];
+    while ($row = $resultKriteria->fetch_assoc()) {
+        $kriteria[] = $row['kode'];
+    }
+
+    // Jika tidak ada kriteria, hentikan proses
+    if (empty($kriteria)) {
+        return;
+    }
+
+    // Hitung total kuadrat untuk setiap kriteria
+    $totalKuadrat = [];
+    foreach ($kriteria as $kodeKriteria) {
+        $query = "SELECT $kodeKriteria FROM $tableKeputusan";
+        $result = $db->query($query);
+
+        $totalKuadrat[$kodeKriteria] = 0;
+        while ($row = $result->fetch_assoc()) {
+            $value = (float)$row[$kodeKriteria];
+            $totalKuadrat[$kodeKriteria] += pow($value, 2);
+        }
+    }
+
+    // Loop data alternatif untuk menghitung matriks R
+    $queryAlternatif = "SELECT kode, " . implode(", ", $kriteria) . " FROM $tableKeputusan";
+    $resultAlternatif = $db->query($queryAlternatif);
+
+    while ($rowAlternatif = $resultAlternatif->fetch_assoc()) {
+        $kodeAlternatif = $rowAlternatif['kode'];
+
+        foreach ($kriteria as $kodeKriteria) {
+            $value = (float)$rowAlternatif[$kodeKriteria];
+            $normalizedValue = 0.0;
+
+            // Normalisasi
+            if (isset($totalKuadrat[$kodeKriteria]) && $totalKuadrat[$kodeKriteria] > 0) {
+                $normalizedValue = round($value / sqrt($totalKuadrat[$kodeKriteria]), 4);
+            }
+
+            // Update nilai normalisasi ke tabel keputusan_r
+            $updateQuery = "UPDATE $tableKeputusanR SET $kodeKriteria = $normalizedValue WHERE kode = '$kodeAlternatif'";
+            $db->query($updateQuery);
+        }
+    }
+}
+
+function hitungTopsisKeputusanY($db, $tableKeputusanR, $tableKriteria, $tableKeputusanY)
 {
     // Ambil bobot kriteria dari tabel 'kriteria'
     $queryKriteria = "SELECT kode, bobot FROM $tableKriteria";
@@ -245,7 +300,7 @@ function hitungKeputusanY($db, $tableKeputusanR, $tableKriteria, $tableKeputusan
         foreach ($kriteriaBobot as $kodeKriteria => $bobot) {
             $nilai = $rowKeputusanR[$kodeKriteria];
             $nilaiTerbobot = $nilai * $bobot;
-            $nilaiTerbobot = round($nilaiTerbobot, 2); // Format dengan dua angka desimal
+            $nilaiTerbobot = round($nilaiTerbobot, 4); // Format dengan dua angka desimal
 
             // Update nilai di tabel keputusan_y
             $updateQuery = "UPDATE $tableKeputusanY SET $kodeKriteria = $nilaiTerbobot WHERE kode = '$kode'";
@@ -254,11 +309,17 @@ function hitungKeputusanY($db, $tableKeputusanR, $tableKriteria, $tableKeputusan
     }
 }
 
-function hitungMatrikSolusi($db, $tableKeputusanY, $tableKriteria, $tableMSolusi)
+function hitungTopsisMatrikSolusi($db, $tableKeputusanY, $tableKriteria, $tableMatriksSolusi)
 {
     // Ambil data kriteria
     $queryKriteria = "SELECT kode, atribut FROM $tableKriteria";
     $resultKriteria = $db->query($queryKriteria);
+
+    // Cek jika tidak ada data di tabel kriteria
+    if ($resultKriteria->num_rows == 0
+    ) {
+        return;  // Jika tidak ada data, hentikan proses
+    }
 
     $atributKriteria = [];
     while ($row = $resultKriteria->fetch_assoc()) {
@@ -270,14 +331,19 @@ function hitungMatrikSolusi($db, $tableKeputusanY, $tableKriteria, $tableMSolusi
     $resultKeputusanY = $db->query($queryKeputusanY);
 
     $dataKeputusanY = [];
-    while ($row = $resultKeputusanY->fetch_assoc()) {
-        $dataKeputusanY[] = $row;
+    if ($resultKeputusanY) {
+        while ($row = $resultKeputusanY->fetch_assoc()) {
+            $dataKeputusanY[] = $row;
+        }
     }
-
     // Tentukan kriteria berdasarkan kolom tabel
-    $kriteria = array_keys($dataKeputusanY[0]);
+    $kriteria = !empty($dataKeputusanY) ? array_keys($dataKeputusanY[0]) : [];
     array_shift($kriteria); // Menghapus kolom 'kode'
 
+    // Jika tidak ada kriteria, hentikan proses
+    if (empty($kriteria)) {
+        return;
+    }
     // Inisialisasi nilai A+ dan A-
     $aPlus = [];
     $aMinus = [];
@@ -306,22 +372,22 @@ function hitungMatrikSolusi($db, $tableKeputusanY, $tableKriteria, $tableMSolusi
 
         foreach ($kriteria as $kriteriaItem) {
             if (isset($data[$kriteriaItem])) {
-                $values[] = "$kriteriaItem = " . round($data[$kriteriaItem], 2);
+                $values[] = "$kriteriaItem = " . round($data[$kriteriaItem], 4);
             }
         }
-        $queryUpdate = "UPDATE $tableMSolusi SET " . implode(', ', $values) . " WHERE kode = '$kode'";
+        $queryUpdate = "UPDATE $tableMatriksSolusi SET " . implode(', ', $values) . " WHERE kode = '$kode'";
         if ($db->query($queryUpdate));
     }
 }
 
-function hitungJarakSolusi($db, $tableKeputusanY, $tableMSolusi, $tableJSolusi)
+function hitungTopsisJarakMatriks($db, $tableKeputusanY, $tableMatriksSolusi, $tableJarakMatriks)
 {
     // Ambil data dari tabel keputusan_y
     $queryKeputusanY = "SELECT * FROM $tableKeputusanY";
     $resultKeputusanY = $db->query($queryKeputusanY);
 
     // Ambil data dari tabel m_solusi
-    $queryMSolusi = "SELECT * FROM $tableMSolusi";
+    $queryMSolusi = "SELECT * FROM $tableMatriksSolusi";
     $resultMSolusi = $db->query($queryMSolusi);
 
     // Simpan data m_solusi dalam array untuk perhitungan
@@ -361,69 +427,105 @@ function hitungJarakSolusi($db, $tableKeputusanY, $tableMSolusi, $tableJSolusi)
         $distancesPlus = sqrt($distancesPlus);
         $distancesMinus = sqrt($distancesMinus);
 
-        // Bulatkan hasil ke 3 angka belakang koma
-        $distancesPlus = number_format($distancesPlus, 3);
-        $distancesMinus = number_format($distancesMinus, 3);
+        // Bulatkan hasil ke 4 angka belakang koma
+        $distancesPlus = number_format($distancesPlus, 4);
+        $distancesMinus = number_format($distancesMinus, 4);
 
         // Tampilkan hasil akhir untuk verifikasi
 
         // Update tabel j_solusi
-        $updateQuery = "UPDATE $tableJSolusi SET `Di+` = $distancesPlus, `Di-` = $distancesMinus WHERE kode = '$kodeAlternatif'";
+        $updateQuery = "UPDATE $tableJarakMatriks SET `Di+` = $distancesPlus, `Di-` = $distancesMinus WHERE kode = '$kodeAlternatif'";
         if (!$db->query($updateQuery)) {
             echo "Error updating j_solusi for $kodeAlternatif: " . $db->error . "<br>";
         }
     }
 }
 
-function hitungPreferensi($db)
+function hitungTopsisPreferensi($db, $tableJarakMatriks, $tablePreferensi)
 {
-    // Ambil semua data dari tabel j_solusi
-    $query = "SELECT kode, `Di+`, `Di-` FROM j_solusi";
+    // Ambil semua data dari tabel jarak solusi
+    $query = "SELECT kode, `Di+`, `Di-` FROM $tableJarakMatriks";
     $result = $db->query($query);
+
+    // Cek apakah ada data
+    if ($result->num_rows == 0) {
+        return; // Jika tidak ada data, hentikan proses
+    }
 
     if ($result) {
         while ($row = $result->fetch_assoc()) {
+            if (empty($row['kode'])) {
+                return;
+            }
+            
             $kode = $row['kode'];
             $Di_plus = $row['Di+'];
             $Di_minus = $row['Di-'];
 
+
+            // Pastikan pembagi tidak nol
+            if ($Di_plus + $Di_minus == 0) {
+                return; // Hentikan proses jika pembagi nol
+            }
+
             // Hitung nilai preferensi V
-            $nilai_preferensi = round($Di_minus / ($Di_plus + $Di_minus), 3);
+            $nilai_preferensi = round($Di_minus / ($Di_plus + $Di_minus), 4);
 
             // Simpan hasilnya ke tabel preferensi
-            $updateQuery = "UPDATE preferensi SET nilai = $nilai_preferensi WHERE kode = '$kode'";
+            $updateQuery = "UPDATE $tablePreferensi SET nilai = $nilai_preferensi WHERE kode = '$kode'";
             $db->query($updateQuery);
         }
     } else {
-        echo "Error: " . $db->error;
+        return;
     }
 }
 
-
-
-function updateHasilTable($db)
+function gabungPreferensiSawTopsis($db, $tableSaw, $tableTopsis, $tableGabungan)
 {
-    // Ambil data dari tabel preferensi, mengurutkan berdasarkan nilai terbesar
-    $query = "SELECT p.kode, p.nilai, a.nama  FROM preferensi p JOIN alternatif a ON p.kode = a.kode ORDER BY p.nilai DESC";
+    // Ambil data preferensi dari tabel SAW dan TOPSIS
+    $querySaw = "SELECT kode, nilai AS nilaiSaw FROM $tableSaw";
+    $queryTopsis = "SELECT kode, nilai AS nilaiTopsis FROM $tableTopsis";
 
-    $result = $db->query($query);
+    $resultSaw = $db->query($querySaw);
+    $resultTopsis = $db->query($queryTopsis);
 
-    if ($result) {
-        $rank = 1;
-        while ($row = $result->fetch_assoc()) {
-            $kode = $row['kode'];
-            $nama = $row['nama'];
-            $nilai = $row['nilai'];
-
-            // Update data ke tabel hasil dengan peringkat
-            $updateQuery = "UPDATE hasil 
-                            SET nama = '$nama', nilai = $nilai, rangking = $rank 
-                            WHERE kode = '$kode'";
-            $db->query($updateQuery);
-
-            $rank++;
-        }
-    } else {
+    if (!$resultSaw || !$resultTopsis) {
         echo "Error: " . $db->error;
+        return;
+    }
+
+    // Simpan hasil preferensi dari SAW ke dalam array
+    $preferensiSaw = [];
+    while ($row = $resultSaw->fetch_assoc()) {
+        $preferensiSaw[$row['kode']] = (float)$row['nilaiSaw'];
+    }
+
+    // Gabungkan nilai preferensi SAW dan TOPSIS
+    $gabungan = [];
+    while ($row = $resultTopsis->fetch_assoc()) {
+        $kode = $row['kode'];
+        $nilaiTopsis = (float)$row['nilaiTopsis'];
+
+        if (isset($preferensiSaw[$kode])) {
+            $nilaiSaw = $preferensiSaw[$kode];
+            $nilaiGabungan = round(($nilaiSaw + $nilaiTopsis) / 2, 4);
+            $gabungan[] = ['kode' => $kode, 'nilai' => $nilaiGabungan];
+        }
+    }
+
+    // Urutkan nilai gabungan dari yang terbesar ke yang terkecil
+    usort($gabungan, function ($a, $b) {
+        return $b['nilai'] <=> $a['nilai']; // Descending order
+    });
+
+    // Simpan ke tabel gabungan dan tambahkan ranking
+    $rank = 1;
+    foreach ($gabungan as $item) {
+        $kode = $item['kode'];
+        $nilai = $item['nilai'];
+
+        $updateQuery = "UPDATE $tableGabungan SET nilai = $nilai, ranking = $rank WHERE kode = '$kode'";
+        $db->query($updateQuery);
+        $rank++;
     }
 }

@@ -1,22 +1,47 @@
 @import url('tabelhp.css');
 
+.custom-img {
+    max-width: 100%;
+    height: auto;
+    margin-bottom: 20px;
+}
 
 body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    color: #2E5077;
 
 }
 
-main{
+.datatabel {
+    color: #2E5077;
+}
+
+main {
     flex: 1;
     margin-left: 10%;
     margin-right: 10%;
 }
 
+@media print {
+    .card {
+        width: 100%;
+    }
+
+    .card table {
+        transform: scale(0.9);
+        transform-origin: top left;
+        -webkit-transform: scale(0.9);
+        -moz-transform: scale(0.9);
+        -ms-transform: scale(0.9);
+        -o-transform: scale(0.9);
+    }
+
+}
 
 @media (max-width: 1200px) {
-    main{
+    main {
         margin-left: 0;
         margin-right: 0;
     }
@@ -67,6 +92,7 @@ main{
         padding-right: 1% !important;
         /* margin-right: 0; */
     }
+
     .navbar-brand.no-hover {
         margin-left: 2%;
     }
@@ -103,4 +129,3 @@ main{
     /* Menebalkan teks */
 
 }
-

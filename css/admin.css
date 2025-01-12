@@ -1,14 +1,24 @@
 @import url('tabelhp.css');
 
 /* bagan atas */
+.text-justify {
+    text-align: justify;
+}
+
+
 
 .custom-img {
     max-width: 100%;
-    /* Agar gambar tidak melebihi lebar kontainer */
     height: auto;
-    /* Mempertahankan rasio aspek gambar */
     margin-bottom: 20px;
-    /* Menambahkan spasi di bawah gambar */
+}
+
+body {
+    color: #2E5077;
+}
+
+.datatabel {
+    color: #2E5077;
 }
 
 .datatable-selector {
@@ -37,15 +47,10 @@
 /* Mengatur gaya tombol */
 .fa-square-plus {
     display: inline-flex;
-    /* Menyusun ikon secara inline dan fleksibel */
     align-items: center;
-    /* Menyelaraskan ikon secara vertikal di tengah */
     justify-content: center;
-    /* Menyelaraskan ikon secara horizontal di tengah */
     font-size: 24px;
-    /* Ukuran ikon */
     color: #000000;
-    /* Warna ikon */
 }
 
 .nav {

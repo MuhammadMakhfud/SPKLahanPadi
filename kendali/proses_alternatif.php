@@ -5,6 +5,10 @@ if (isset($_POST['tambah'])) {
     $kode = $_POST['kode'];
     $nama = $_POST['nama'];
 
+    echo '<pre>';
+    print_r($_POST);
+    echo '</pre>';
+
     // Ambil semua kolom dari tabel 'alternatif'
     $query = "SHOW COLUMNS FROM alternatif";
     $result = $db->query($query);
@@ -18,31 +22,49 @@ if (isset($_POST['tambah'])) {
     $keputusan_values = ["'$kode'"];
 
     while ($row = $result->fetch_assoc()) {
+        // Cek jika kolom bukan 'kode', 'nama', atau 'id'
         if (!in_array($row['Field'], ['kode', 'nama', 'id'])) {
-            // Pisahkan nilai dan nama sub
-            list($nilai, $nama_sub) = explode('|', $_POST[$row['Field']]);
+            $tipe_kriteria = getKriteriaTipe($db, $row['Field']); // Cek tipe kolom
+            $input_value = $_POST[$row['Field']] ?? ''; // Ambil nilai dari $_POST, pastikan ada
 
-            // Tambahkan kolom dan nilai ke tabel alternatif
-            $alternatif_columns[] = $row['Field'];
-            $alternatif_values[] = "'" . $nama_sub . "'";
+            // Cek tipe kriteria
+            if ($tipe_kriteria === 'jenis') {
+                list($nilai, $nama_sub) = explode('|', $input_value);
+                $alternatif_columns[] = $row['Field'];
+                $alternatif_values[] = "'" . $nama_sub . "'";
 
-            // Tambahkan kolom dan nilai ke tabel keputusan
-            $keputusan_columns[] = $row['Field'];
-            $keputusan_values[] = $nilai; // Tanpa kutip, karena tipe data int
+                $keputusan_columns[] = $row['Field'];
+                $keputusan_values[] = $nilai;
+            } elseif ($tipe_kriteria === 'nilai_rentang') {
+                $tabel_sub = "sub_" . $row['Field']; // Nama tabel dinamis berdasarkan kode kolom
+                $query = "SELECT nilai FROM $tabel_sub 
+                            WHERE (min IS NULL OR $input_value >= min) 
+                            AND (max IS NULL OR $input_value <= max)";
+                $sub_result = $db->query($query);
+
+                if ($sub_result && $row_sub = $sub_result->fetch_assoc()) {
+                    $alternatif_columns[] = $row['Field'];
+                    $alternatif_values[] = "'" . $input_value . "'";
+
+                    $keputusan_columns[] = $row['Field'];
+                    $keputusan_values[] = $row_sub['nilai']; // Ambil nilai sesuai baris rentang
+                }
+            }
         }
     }
 
     // Sisipkan data baru ke tabel alternatif
     $query = "INSERT INTO alternatif (" . implode(',', $alternatif_columns) . ") VALUES (" . implode(',', $alternatif_values) . ")";
-
+    echo "Query Hasil: $query<br>";
 
     if ($db->query($query)) {
         // Sisipkan data baru ke tabel keputusan
         $query = "INSERT INTO keputusan (" . implode(',', $keputusan_columns) . ") VALUES (" . implode(',', $keputusan_values) . ")";
+        echo "Query Hasil: $query<br>";
 
         if ($db->query($query)) {
             // Sisipkan data ke tabel tambahan
-            $tables = ['keputusan_r', 'keputusan_y', 'preferensi', 'j_solusi'];
+            $tables = ['saw_keputusan_r', 'saw_preferensi', 'topsis_keputusan_r', 'topsis_keputusan_y', 'topsis_jarakmatriks', 'topsis_preferensi'];
 
             foreach ($tables as $table) {
                 $insert_query = "INSERT INTO $table (kode) VALUES ('$kode')";
@@ -55,6 +77,7 @@ if (isset($_POST['tambah'])) {
             $db->query($query);
 
             hitung($db);
+            echo "Query Hasil: $query<br>";
 
             header("Location: d_alternatif.php");
             exit;
@@ -67,53 +90,71 @@ if (isset($_POST['tambah'])) {
     }
 }
 
+
 // Logika untuk proses pengeditan data
 if (isset($_POST['edit'])) {
     $kode = $_POST['kode'];
     $nama = $_POST['nama'];
 
+    echo '<pre>';
+    print_r($_POST);
+    echo '</pre>';
+
     // Ambil semua kolom dari tabel 'alternatif'
     $query = "SHOW COLUMNS FROM alternatif";
     $result = $db->query($query);
 
-    // Bangun query untuk memperbarui data di tabel alternatif
     $alternatif_updates = [];
     $keputusan_updates = [];
 
     while ($row = $result->fetch_assoc()) {
+        // Cek jika kolom bukan 'kode', 'nama', atau 'id'
         if (!in_array($row['Field'], ['kode', 'nama', 'id'])) {
-            // Pisahkan nilai dan nama sub
-            list($nilai, $nama_sub) = explode('|', $_POST[$row['Field']]);
+            $tipe_kriteria = getKriteriaTipe($db, $row['Field']); // Cek tipe kolom
+            $input_value = $_POST[$row['Field']] ?? ''; // Ambil nilai dari $_POST, pastikan ada
 
-            // Tambahkan update untuk tabel alternatif
-            $alternatif_updates[] = $row['Field'] . "='" . $nama_sub . "'";
+            // Cek tipe kriteria
+            if ($tipe_kriteria === 'jenis') {
+                list($nilai, $nama_sub) = explode('|', $input_value);
+                $alternatif_updates[] = $row['Field'] . " = '" . $nama_sub . "'";
+                $keputusan_updates[] = $row['Field'] . " = " . $nilai;
+            } elseif ($tipe_kriteria === 'nilai_rentang') {
+                $tabel_sub = "sub_" . strtolower($row['Field']); // Nama tabel dinamis berdasarkan kode kolom
+                $query = "SELECT nilai FROM $tabel_sub 
+                            WHERE (min IS NULL OR $input_value >= min) 
+                            AND (max IS NULL OR $input_value <= max)";
+                $sub_result = $db->query($query);
 
-            // Tambahkan update untuk tabel keputusan
-            $keputusan_updates[] = $row['Field'] . "='" . $nilai . "'";
+                if ($sub_result && $row_sub = $sub_result->fetch_assoc()) {
+                    $alternatif_updates[] = $row['Field'] . " = '" . $input_value . "'";
+                    $keputusan_updates[] = $row['Field'] . " = " . $row_sub['nilai'];
+                }
+            }
         }
     }
 
-    // Perbarui data di tabel alternatif
-    $query = "UPDATE alternatif SET nama='$nama', " . implode(', ', $alternatif_updates) . " WHERE kode='$kode'";
+    // Update data di tabel alternatif
+    $query = "UPDATE alternatif SET nama = '$nama', " . implode(',', $alternatif_updates) . " WHERE kode = '$kode'";
+    echo "Query Update Alternatif: $query<br>";
 
     if ($db->query($query)) {
-        // Perbarui data di tabel keputusan
-        $query = "UPDATE keputusan SET " . implode(', ', $keputusan_updates) . " WHERE kode='$kode'";
+        // Update data di tabel keputusan
+        $query = "UPDATE keputusan SET " . implode(',', $keputusan_updates) . " WHERE kode = '$kode'";
+        echo "Query Update Keputusan: $query<br>";
 
         if ($db->query($query)) {
-            hitung($db);
-
+            hitung($db); // Hitung ulang jika ada perubahan
+            echo "Data berhasil diperbarui.";
             header("Location: d_alternatif.php");
             exit;
         } else {
-            // Handle error untuk keputusan
             echo "Error: " . $db->error;
         }
     } else {
-        // Handle error untuk alternatif
         echo "Error: " . $db->error;
     }
 }
+
 
 
 // Logika untuk proses penghapusan data
@@ -127,7 +168,7 @@ if (isset($_POST['hapus'])) {
     $kode = $row['kode'];
 
     // Daftar tabel yang harus dihapus
-    $tables = ['keputusan', 'keputusan_r', 'keputusan_y', 'j_solusi', 'preferensi', 'hasil'];
+    $tables = ['keputusan', 'saw_keputusan_r', 'saw_preferensi', 'topsis_keputusan_r', 'topsis_keputusan_y', 'topsis_jarakmatriks', 'topsis_preferensi', 'hasil'];
 
     // Hapus data dari setiap tabel berdasarkan kode
     foreach ($tables as $table) {
