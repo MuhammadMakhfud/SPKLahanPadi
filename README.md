@@ -1,3 +1,3 @@
 # spklahanpadi
- 
-hello
+
+Sistem Pendukung Keputusan Lahan Padi
