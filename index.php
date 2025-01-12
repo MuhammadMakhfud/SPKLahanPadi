@@ -21,7 +21,7 @@
         <div class="navbar-nav d-flex flex-row align-items-center">
             <!-- Navbar Links -->
             <a class="navbar-brand active" href="index.php">Beranda</a>
-            <a class="navbar-brand" href="data.php">Data</a>
+            <a class="navbar-brand" href="data.php">Data coba</a>
         </div>
     </nav>
 
